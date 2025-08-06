@@ -1,15 +1,21 @@
 import {
   AppBar as MuiAppBar,
   AppBarProps,
+  Avatar,
   Box,
   Button,
+  Divider,
   Drawer,
   IconButton,
   List,
   ListItem,
   ListItemButton,
+  ListItemIcon,
   ListItemText,
+  Menu,
+  MenuItem,
   Toolbar,
+  Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
@@ -17,17 +23,27 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useUserSession } from "../states/UserSession";
 import { useMemo, useState } from "react";
-import { Menu as MenuIcon } from "@mui/icons-material";
+import {
+  Menu as MenuIcon,
+  Home,
+  Explore,
+  VideoLibrary,
+  Search,
+  Settings,
+  Logout,
+} from "@mui/icons-material";
 
 // Componente para o menu lateral em dispositivos móveis
 const MobileDrawer = ({
   pages,
   onClose,
   open,
+  location,
 }: {
-  pages: { name: string; path: string }[];
+  pages: { name: string; path: string; icon: JSX.Element }[];
   onClose: () => void;
   open: boolean;
+  location: any;
 }) => (
   <Drawer anchor="left" open={open} onClose={onClose}>
     <Box
@@ -36,10 +52,21 @@ const MobileDrawer = ({
       onClick={onClose}
       onKeyDown={onClose}
     >
+      <Toolbar>
+        <Typography variant="h6" sx={{ color: "text.primary" }}>
+          Nevu
+        </Typography>
+      </Toolbar>
+      <Divider />
       <List>
         {pages.map((page) => (
           <ListItem key={page.name} disablePadding>
-            <ListItemButton component={Link} to={page.path}>
+            <ListItemButton
+              component={Link}
+              to={page.path}
+              selected={location.pathname === page.path}
+            >
+              <ListItemIcon>{page.icon}</ListItemIcon>
               <ListItemText primary={page.name} />
             </ListItemButton>
           </ListItem>
@@ -56,14 +83,15 @@ const AppBar = (props: AppBarProps) => {
   const location = useLocation();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
 
   const pages = useMemo(
     () => [
-      { name: "Home", path: "/" },
-      { name: "Browse", path: "/browse" },
-      { name: "Library", path: "/library" },
-      { name: "Search", path: "/search" },
-      { name: "Settings", path: "/settings" },
+      { name: "Home", path: "/", icon: <Home /> },
+      { name: "Browse", path: "/browse", icon: <Explore /> },
+      { name: "Library", path: "/library", icon: <VideoLibrary /> },
+      { name: "Search", path: "/search", icon: <Search /> },
+      { name: "Settings", path: "/settings", icon: <Settings /> },
     ],
     []
   );
@@ -72,10 +100,23 @@ const AppBar = (props: AppBarProps) => {
     setDrawerOpen(!drawerOpen);
   };
 
+  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElUser(event.currentTarget);
+  };
+
+  const handleCloseUserMenu = () => {
+    setAnchorElUser(null);
+  };
+
+  const handleLogout = () => {
+    // Lógica de logout aqui
+    handleCloseUserMenu();
+  };
+
   return (
     <MuiAppBar {...props}>
       <Toolbar>
-        {isMobile ? (
+        {isMobile && (
           <>
             <IconButton
               color="inherit"
@@ -90,9 +131,10 @@ const AppBar = (props: AppBarProps) => {
               pages={pages}
               open={drawerOpen}
               onClose={handleDrawerToggle}
+              location={location}
             />
           </>
-        ) : null}
+        )}
         <Typography
           variant="h6"
           noWrap
@@ -100,7 +142,8 @@ const AppBar = (props: AppBarProps) => {
           to="/"
           sx={{
             mr: 2,
-            flexGrow: isMobile ? 1 : 0,
+            display: { xs: isMobile ? "flex" : "none", md: "flex" },
+            flexGrow: 1,
             fontFamily: "monospace",
             fontWeight: 700,
             letterSpacing: ".3rem",
@@ -110,6 +153,7 @@ const AppBar = (props: AppBarProps) => {
         >
           Nevu
         </Typography>
+
         {!isMobile && (
           <Box sx={{ flexGrow: 1, display: "flex" }}>
             {pages.map((page) => (
@@ -131,10 +175,42 @@ const AppBar = (props: AppBarProps) => {
             ))}
           </Box>
         )}
+
         <Box sx={{ flexGrow: 0 }}>
-          <Typography>
-            {user?.title}@{server?.name}
-          </Typography>
+          <Tooltip title="Open settings">
+            <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+              <Avatar alt={user?.title} src={user?.thumb} />
+            </IconButton>
+          </Tooltip>
+          <Menu
+            sx={{ mt: "45px" }}
+            id="menu-appbar"
+            anchorEl={anchorElUser}
+            anchorOrigin={{
+              vertical: "top",
+              horizontal: "right",
+            }}
+            keepMounted
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "right",
+            }}
+            open={Boolean(anchorElUser)}
+            onClose={handleCloseUserMenu}
+          >
+            <MenuItem>
+              <Typography textAlign="center">
+                {user?.title}@{server?.name}
+              </Typography>
+            </MenuItem>
+            <Divider />
+            <MenuItem onClick={handleLogout}>
+              <ListItemIcon>
+                <Logout fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Logout</ListItemText>
+            </MenuItem>
+          </Menu>
         </Box>
       </Toolbar>
     </MuiAppBar>
