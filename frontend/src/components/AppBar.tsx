@@ -1,5 +1,4 @@
 /* eslint-disable no-lone-blocks */
-import React from "react"
 import { Theme } from "@emotion/react";
 import {
   AppBar,
