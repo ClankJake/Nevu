@@ -1,24 +1,21 @@
 import { create } from "zustand";
-import { getLoggedInUser } from "../plex";
+import { PlexUser } from "plex/plextv";
+import { PlexServer } from "plex/plex";
 
-interface UserSessionState {
-    user: Plex.UserData | null;
-    loadUser: () => void;
+interface UserSession {
+  user?: PlexUser;
+  server?: PlexServer;
+  token?: string;
+  setUser: (user: PlexUser) => void;
+  setServer: (server: PlexServer) => void;
+  setToken: (token: string) => void;
 }
 
-export const useUserSessionStore = create<UserSessionState>((
-    set,
-    get
-) => ({
-    user: null,
-    loadUser: async () => {
-        const res = await getLoggedInUser();
-        console.log("User session store", res);
-        if (!res) return set({ user: null });
-        set({
-            user: res
-        });
-    }
+export const useUserSession = create<UserSession>((set) => ({
+  user: undefined,
+  server: undefined,
+  token: undefined,
+  setUser: (user) => set(() => ({ user: user })),
+  setServer: (server) => set(() => ({ server: server })),
+  setToken: (token) => set(() => ({ token: token })),
 }));
-
-useUserSessionStore.getState().loadUser();
